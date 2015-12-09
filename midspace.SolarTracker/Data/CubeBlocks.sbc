@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <CubeBlocks>
+    <!-- Region BatteryBlock-->
+    <Definition xsi:type="MyObjectBuilder_SensorBlockDefinition">
+      <Id>
+        <TypeId>SensorBlock</TypeId>
+        <SubtypeId>SmallSunSensor</SubtypeId>
+      </Id>
+      <DisplayName>Sun Sensor</DisplayName>
+      <Icon>Textures\GUI\Icons\Cubes\SunSensor.dds</Icon>
+      <CubeSize>Small</CubeSize>
+      <BlockTopology>TriangleMesh</BlockTopology>
+      <Size x="1" y="1" z="1" />
+      <ModelOffset x="0" y="0" z="0" />
+      <Model>Models\Cubes\Small\Camera.mwm</Model>
+      <Components>
+        <Component Subtype="InteriorPlate" Count="5" />
+        <Component Subtype="Construction" Count="5" />
+        <Component Subtype="Computer" Count="9" />
+        <Component Subtype="RadioCommunication" Count="9" />
+        <Component Subtype="Detector" Count="9" />
+        <Component Subtype="SteelPlate" Count="3" />
+      </Components>
+      <CriticalComponent Subtype="Detector" Index="0" />
+      <MountPoints>
+        <MountPoint Side="Back" StartX="0" StartY="0" EndX="1" EndY="1" />
+      </MountPoints>
+      <BuildProgressModels>
+        <Model BuildPercentUpperBound="0.50" File="Models\Cubes\small\CameraConstruction_1.mwm" />
+        <Model BuildPercentUpperBound="1.00" File="Models\Cubes\small\CameraConstruction_2.mwm" />
+      </BuildProgressModels>
+      <BlockPairName>SunSensor</BlockPairName>
+      <MirroringY>Z</MirroringY>
+      <MirroringZ>Y</MirroringZ>
+      <EdgeType>Light</EdgeType>
+      <BuildTimeSeconds>20</BuildTimeSeconds>
+    </Definition>
+    <Definition xsi:type="MyObjectBuilder_SensorBlockDefinition">
+      <Id>
+        <TypeId>SensorBlock</TypeId>
+        <SubtypeId>LargeSunSensor</SubtypeId>
+      </Id>
+      <DisplayName>Sun Sensor</DisplayName>
+      <Icon>Textures\GUI\Icons\Cubes\SunSensor.dds</Icon>
+      <CubeSize>Large</CubeSize>
+      <BlockTopology>TriangleMesh</BlockTopology>
+      <Size x="1" y="1" z="1" />
+      <ModelOffset x="0" y="0" z="0" />
+      <Model>Models\Cubes\Large\Camera.mwm</Model>
+      <Components>
+        <Component Subtype="InteriorPlate" Count="5" />
+        <Component Subtype="Construction" Count="5" />
+        <Component Subtype="Computer" Count="9" />
+        <Component Subtype="RadioCommunication" Count="9" />
+        <Component Subtype="Detector" Count="9" />
+        <Component Subtype="SteelPlate" Count="3" />
+      </Components>
+      <CriticalComponent Subtype="Detector" Index="0" />
+      <MountPoints>
+        <MountPoint Side="Back" StartX="0" StartY="0" EndX="1" EndY="1" />
+      </MountPoints>
+      <BuildProgressModels>
+        <Model BuildPercentUpperBound="0.50" File="Models\Cubes\large\CameraConstruction_1.mwm" />
+        <Model BuildPercentUpperBound="1.00" File="Models\Cubes\large\CameraConstruction_2.mwm" />
+      </BuildProgressModels>
+      <BlockPairName>SunSensor</BlockPairName>
+      <MirroringY>Z</MirroringY>
+      <MirroringZ>Y</MirroringZ>
+      <EdgeType>Light</EdgeType>
+      <BuildTimeSeconds>20</BuildTimeSeconds>
+    </Definition>
+  </CubeBlocks>
+</Definitions>
