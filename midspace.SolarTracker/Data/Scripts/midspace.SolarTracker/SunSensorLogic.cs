@@ -72,7 +72,7 @@ namespace midspace.SolarTracker
 
             if (!_isIsValid)
                 return;
-            
+
             if (!_ignoreNameChange)
             {
                 try
@@ -117,70 +117,92 @@ namespace midspace.SolarTracker
             if (string.IsNullOrEmpty(terminalEntity.CustomName) || !terminalEntity.IsWorking || !terminalEntity.IsFunctional)
                 return;
 
-            try
+
+            Vector2 ang = Vector2.Zero;
+            // TODO: run as background, if I can find a suitable world to test it on FIRST!
+
+            MyAPIGateway.Parallel.Start(delegate ()
+            // Background processing occurs within this block.
             {
-                var sunDirection = Support.GetSunDirection();
-                var ang = GetRotationAngle(Entity.WorldMatrix, sunDirection);
-
-                // The Sun doesn't turn the a Dedicated Server. :(
-                // None of these give anything but a static position on a Server.
-
-                //var environment = MyAPIGateway.Session.GetSector().Environment;
-                //Vector3D sunDirection1;
-                //Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out sunDirection1);
-                //WriteDebug("SunDirection1", "{0} {1} {2}", sunDirection.X, sunDirection.Y, sunDirection.Z);
-
-                //var ed = ((MyObjectBuilder_EnvironmentDefinition)MyDefinitionManager.Static.EnvironmentDefinition.GetObjectBuilder());
-                //WriteDebug("SunDirection2", "{0} {1} {2}", ed.SunDirection.X, ed.SunDirection.Y, ed.SunDirection.Z);
-
-                //environment = MyAPIGateway.Session.GetWorld().Sector.Environment;
-                //Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out sunDirection1);
-                //WriteDebug("SunDirection3", "{0} {1} {2}", sunDirection.X, sunDirection.Y, sunDirection.Z);
-
-                //MyAPIGateway.Multiplayer.
-                //MyAPIGateway.Utilities.ConfigDedicated.SessionSettings.
-                //MyAPIGateway.Session.GetCheckpoint("null").;
-
-
-                // Check Ownership.
-                var block = (IMyCubeBlock)Entity;
-
-                //WriteDebug("Panel offset", "{0} {1}", ang.X, ang.Y);
-
-                // ang.Y Azimuth  Yaw.
-                // any.X Elevation  Pitch.
-
-                if (_attachedRotors.Count >= 2)
+                try
                 {
-                    var rotorBase = _attachedRotors[0] as IMyTerminalBlock;
-                    if (rotorBase == null)
-                        rotorBase = _attachedRotors[1] as IMyTerminalBlock;
+                    var sunDirection = Support.GetSunDirection();
+                    ang = GetRotationAngle(Entity.WorldMatrix, sunDirection);
+                }
+                catch (Exception ex)
+                {
+                }
 
-                    if (rotorBase != null && !rotorBase.Closed && rotorBase.HasPlayerAccess(block.OwnerId))
+            }, delegate ()
+            // when the background processing is finished, this block will run foreground.
+            {
+                try
+                {
+
+
+                    // The Sun doesn't turn the a Dedicated Server. :(
+                    // None of these give anything but a static position on a Server.
+
+                    //var environment = MyAPIGateway.Session.GetSector().Environment;
+                    //Vector3D sunDirection1;
+                    //Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out sunDirection1);
+                    //WriteDebug("SunDirection1", "{0} {1} {2}", sunDirection.X, sunDirection.Y, sunDirection.Z);
+
+                    //var ed = ((MyObjectBuilder_EnvironmentDefinition)MyDefinitionManager.Static.EnvironmentDefinition.GetObjectBuilder());
+                    //WriteDebug("SunDirection2", "{0} {1} {2}", ed.SunDirection.X, ed.SunDirection.Y, ed.SunDirection.Z);
+
+                    //environment = MyAPIGateway.Session.GetWorld().Sector.Environment;
+                    //Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out sunDirection1);
+                    //WriteDebug("SunDirection3", "{0} {1} {2}", sunDirection.X, sunDirection.Y, sunDirection.Z);
+
+                    //MyAPIGateway.Multiplayer.
+                    //MyAPIGateway.Utilities.ConfigDedicated.SessionSettings.
+                    //MyAPIGateway.Session.GetCheckpoint("null").;
+
+
+                    // Check Ownership.
+                    var block = (IMyCubeBlock)Entity;
+
+                    //WriteDebug("Panel offset", "{0} {1}", ang.X, ang.Y);
+
+                    // ang.Y Azimuth  Yaw.
+                    // any.X Elevation  Pitch.
+
+                    if (_attachedRotors.Count >= 2)
                     {
-                        WriteDebug("Turn", "'{0}'", rotorBase.CustomName);
-                        TurnRotor(_attachedRotors[0], _attachedRotors[1], ang, _rotorDirections[0]);
+                        var rotorBase = _attachedRotors[0] as IMyTerminalBlock;
+                        if (rotorBase == null)
+                            rotorBase = _attachedRotors[1] as IMyTerminalBlock;
+
+                        if (rotorBase != null && !rotorBase.Closed && rotorBase.HasPlayerAccess(block.OwnerId))
+                        {
+                            WriteDebug("Turn", "'{0}'", rotorBase.CustomName);
+                            TurnRotor(_attachedRotors[0], _attachedRotors[1], ang, _rotorDirections[0]);
+                        }
+                    }
+                    if (_attachedRotors.Count >= 3)
+                    {
+                        var rotorBase = _attachedRotors[2] as IMyTerminalBlock;
+                        if (rotorBase == null)
+                            rotorBase = _attachedRotors[3] as IMyTerminalBlock;
+
+                        if (rotorBase != null && !rotorBase.Closed && rotorBase.HasPlayerAccess(block.OwnerId))
+                        {
+                            WriteDebug("Turn", "'{0}'", rotorBase.CustomName);
+                            TurnRotor(_attachedRotors[2], _attachedRotors[3], ang, _rotorDirections[1]);
+                        }
                     }
                 }
-                if (_attachedRotors.Count >= 3)
+                catch (Exception ex)
                 {
-                    var rotorBase = _attachedRotors[2] as IMyTerminalBlock;
-                    if (rotorBase == null)
-                        rotorBase = _attachedRotors[3] as IMyTerminalBlock;
-
-                    if (rotorBase != null && !rotorBase.Closed && rotorBase.HasPlayerAccess(block.OwnerId))
-                    {
-                        WriteDebug("Turn", "'{0}'", rotorBase.CustomName);
-                        TurnRotor(_attachedRotors[2], _attachedRotors[3], ang, _rotorDirections[1]);
-                    }
+                    var message = ex.Message.Replace("\r", " ").Replace("\n", " ");
+                    message = message.Substring(0, Math.Min(message.Length, 100));
+                    MyAPIGateway.Utilities.ShowMessage("Error", String.Format("{0}", message));
                 }
-            }
-            catch (Exception ex)
-            {
-                var message = ex.Message.Replace("\r", " ").Replace("\n", " ");
-                message = message.Substring(0, Math.Min(message.Length, 100));
-                MyAPIGateway.Utilities.ShowMessage("Error", String.Format("{0}", message));
-            }
+            });
+
+
+
         }
 
         public override void UpdateAfterSimulation10()
@@ -350,7 +372,7 @@ namespace midspace.SolarTracker
             IMyCubeBlock motorRotor2 = null;
             int baseRotation1 = 1;
             int baseRotation2 = 1;
-            
+
             var gridGroup = Entity.Parent.GetAttachedGrids();
 
             List<IMySlimBlock> blocks;
@@ -387,7 +409,7 @@ namespace midspace.SolarTracker
             if (motorBase1 != null)
             {
                 var motorBase = ((IMyCubeBlock)motorBase1).GetObjectBuilderCubeBlock() as MyObjectBuilder_MotorBase;
-                
+
                 foreach (var grid in gridGroup)
                 {
                     blocks = new List<IMySlimBlock>();
@@ -432,7 +454,7 @@ namespace midspace.SolarTracker
                     FindRotorLinks((IMyCubeGrid)_attachedRotors[_attachedRotors.Count - 1].Parent, motorBase1, motorRotor1, ref _attachedRotors, ref baseRotation1);
                 }
             }
-            
+
 
             //_exceptionInfo += string.Format("Count: {0}. ",_attachedRotors.Count);
 
@@ -448,7 +470,7 @@ namespace midspace.SolarTracker
                 if (cross.Y == -1 * baseRotation1) rotate = RotateDirections.YawNegative;
                 if (cross.X == +1 * baseRotation1) rotate = RotateDirections.PitchPositive;
                 if (cross.X == -1 * baseRotation1) rotate = RotateDirections.PitchNegative;
-                
+
                 _rotorDirections.Add(rotate);
                 // TODO: find rotation.
 
@@ -477,7 +499,7 @@ namespace midspace.SolarTracker
                 _attachedRotors[2].LocalMatrix.Up, rotate, cross);
             }
 
-      
+
             ResetRotor(motorBase1);
             ResetRotor(motorBase2);
 
@@ -540,16 +562,19 @@ namespace midspace.SolarTracker
         {
             if (Debug)
             {
-                string message = text;
-                if (args != null && args.Length != 0)
-                    message = string.Format(text, args);
+                //if (SunSensorScript.Instance != null)
+                //    SunSensorScript.Instance.ServerLogger.Write(text, args);
 
-                MyAPIGateway.Utilities.ShowMessage(sender, message);
+                //        string message = text;
+                //        if (args != null && args.Length != 0)
+                //            message = string.Format(text, args);
 
-                if (MyAPIGateway.Utilities.IsDedicated)
-                    VRage.Utils.MyLog.Default.WriteLineAndConsole("##" + sender + "## " + message);
-                else
-                    VRage.Utils.MyLog.Default.WriteLine("##" + sender + "## " + message);
+                //        MyAPIGateway.Utilities.ShowMessage(sender, message);
+
+                //        if (MyAPIGateway.Utilities.IsDedicated)
+                //            VRage.Utils.MyLog.Default.WriteLineAndConsole("##" + sender + "## " + message);
+                //        else
+                //            VRage.Utils.MyLog.Default.WriteLine("##" + sender + "## " + message);
             }
         }
     }

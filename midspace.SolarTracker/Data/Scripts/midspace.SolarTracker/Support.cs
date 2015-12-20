@@ -11,6 +11,8 @@ namespace midspace.SolarTracker
 
     public static class Support
     {
+        private static double _calcFrequency;
+
         public static IMyCubeBlock FindRotorBase(long entityId, IMyCubeGrid parent = null)
         {
             var entities = new HashSet<IMyEntity>();
@@ -59,7 +61,8 @@ namespace midspace.SolarTracker
 
                 var blocks = new List<IMySlimBlock>();
                 cubeGrid.GetBlocks(blocks, block => block != null && block.FatBlock != null &&
-                    block.FatBlock.BlockDefinition.TypeId == typeof(MyObjectBuilder_PistonBase));
+                    (block.FatBlock.BlockDefinition.TypeId == typeof(MyObjectBuilder_PistonBase) ||
+                    block.FatBlock.BlockDefinition.TypeId == typeof(MyObjectBuilder_ExtendedPistonBase)));
 
                 foreach (var block in blocks)
                 {
@@ -78,6 +81,7 @@ namespace midspace.SolarTracker
 
         private static DateTime _lastFetch;
         private static Vector3D _sunDirection;
+        private static Vector3D? _environmentSunDirection;
         //private readonly static object fetchLock = new object(); //Lock isn't available in Mod API ;(
 
         /// <summary>
@@ -91,8 +95,17 @@ namespace midspace.SolarTracker
             // 820 milliseconds lead time in calculation, to offset for fast sun movement.
             const double LeadTime = 0.820 / 60;
 
+
+            if (_calcFrequency == 0)
+            {
+                // Try to limit the number of updates, to every 720 updates in the orbit (every half a degree), with a minimum update frequency of 500 milliseconds.
+                // This should make anything longer than a 6 minute orbit more efficient.
+                // However, the timing for the Sun in the client can get out of sync with the Server, and this could circumvent keeping that sync.
+                _calcFrequency = Math.Max(MyAPIGateway.Session.SessionSettings.SunRotationIntervalMinutes / 0.012d, 500);
+            }
+
             var fetch = DateTime.Now;
-            if ((fetch - _lastFetch).TotalSeconds > 0.5)
+            if ((fetch - _lastFetch).TotalMilliseconds > _calcFrequency)
             {
                 _lastFetch = fetch;
                 if (MyAPIGateway.Session.SessionSettings.EnableSunRotation)
@@ -102,27 +115,21 @@ namespace midspace.SolarTracker
                     //var ob = (MyObjectBuilder_EnvironmentDefinition)MyDefinitionManager.Static.EnvironmentDefinition.GetObjectBuilder(); // GetObjectBuilder() is no longer deserializing Sun properties in EnvironmentDefinition since 1.105.
                     //Vector3D sunDirection = -(Vector3)ob.SunDirection;
 
-                    var environment = MyAPIGateway.Session.GetSector().Environment;
-                    Vector3D sunDirection;
-                    Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out sunDirection);
-                    sunDirection = -sunDirection;
+                    if (!_environmentSunDirection.HasValue)
+                    {
+                        var environment = MyAPIGateway.Session.GetSector().Environment;
+                        Vector3D direction;
+                        Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out direction);
+                        _environmentSunDirection = -direction;
+                    }
+
+                    Vector3D sunDirection = _environmentSunDirection.Value;
 
                     // copied from Sandbox.Game.Gui.MyGuiScreenGamePlay.Draw()
-                    float angle = 2.0f * MathHelper.Pi * (float)((MyAPIGateway.Session.ElapsedGameTime().TotalMinutes + LeadTime) / MyAPIGateway.Session.SessionSettings.SunRotationIntervalMinutes);
+                    float angle = MathHelper.TwoPi * (float)((MyAPIGateway.Session.ElapsedGameTime().TotalMinutes + LeadTime) / MyAPIGateway.Session.SessionSettings.SunRotationIntervalMinutes);
                     float originalSunCosAngle = Math.Abs(Vector3.Dot(sunDirection, Vector3.Up));
-                    Vector3 sunRotationAxis;
-                    if (originalSunCosAngle > 0.95f)
-                    {
-                        // original sun is too close to the poles
-                        sunRotationAxis = Vector3.Cross(Vector3.Cross(sunDirection, Vector3.Left), sunDirection);
-                    }
-                    else
-                    {
-                        sunRotationAxis = Vector3.Cross(Vector3.Cross(sunDirection, Vector3.Up), sunDirection);
-                    }
-                    sunDirection = Vector3.Transform(sunDirection, Matrix.CreateFromAxisAngle(sunRotationAxis, angle));
-                    sunDirection.Normalize();
-
+                    Vector3D sunRotationAxis = Vector3D.Cross(Vector3D.Cross(sunDirection, originalSunCosAngle > 0.95f ? Vector3D.Left : Vector3D.Up), sunDirection);
+                    sunDirection = Vector3.Normalize(Vector3.Transform(sunDirection, Matrix.CreateFromAxisAngle(sunRotationAxis, angle)));
                     _sunDirection = -sunDirection;
                     //}
                     //else
