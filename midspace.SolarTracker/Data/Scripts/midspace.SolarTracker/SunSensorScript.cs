@@ -5,8 +5,9 @@
     using Sandbox.Common;
     using Sandbox.Common.ObjectBuilders;
     using Sandbox.ModAPI;
+    using VRage.Game.Components;
 
-    [Sandbox.Common.MySessionComponentDescriptor(Sandbox.Common.MyUpdateOrder.AfterSimulation)]
+    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
     public class SunSensorScript : MySessionComponentBase
     {
         #region fields
