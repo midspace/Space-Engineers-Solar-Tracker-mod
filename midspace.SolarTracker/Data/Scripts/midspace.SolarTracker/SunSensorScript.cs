@@ -5,6 +5,7 @@
     using Sandbox.Common;
     using Sandbox.Common.ObjectBuilders;
     using Sandbox.ModAPI;
+    using VRage.Game;
     using VRage.Game.Components;
 
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]

@@ -6,6 +6,7 @@ namespace midspace.SolarTracker
     using Sandbox.Common.ObjectBuilders.Definitions;
     using Sandbox.Definitions;
     using Sandbox.ModAPI;
+    using VRage.Game;
     using VRage.ModAPI;
     using VRageMath;
 
