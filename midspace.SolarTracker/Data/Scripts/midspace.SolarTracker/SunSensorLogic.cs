@@ -5,12 +5,12 @@ namespace midspace.SolarTracker
     using System.Linq;
     using System.Text.RegularExpressions;
 
-    using Sandbox.Common.Components;
     using Sandbox.Common.ObjectBuilders;
     using Sandbox.Definitions;
     using Sandbox.ModAPI;
     using Sandbox.ModAPI.Interfaces;
     using VRage.Game.Components;
+    using VRage.Game.ModAPI;
     using VRage.ModAPI;
     using VRage.ObjectBuilders;
     using VRageMath;

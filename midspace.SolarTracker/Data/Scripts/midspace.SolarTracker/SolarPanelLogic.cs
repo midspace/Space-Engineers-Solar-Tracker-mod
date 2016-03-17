@@ -4,14 +4,15 @@ namespace midspace.SolarTracker
     using System.Collections.Generic;
     using System.Text.RegularExpressions;
 
-    using Sandbox.Common.Components;
     using Sandbox.Common.ObjectBuilders;
     using Sandbox.Definitions;
     using Sandbox.ModAPI;
     using VRage.Game.Components;
+    using VRage.Game.ModAPI;
     using VRage.ModAPI;
     using VRage.ObjectBuilders;
     using VRageMath;
+    using IMySolarPanel = SpaceEngineers.Game.ModAPI.Ingame.IMySolarPanel;
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SolarPanel))]
     public class SolarPanelLogic : MyGameLogicComponent
@@ -22,7 +23,7 @@ namespace midspace.SolarTracker
         private bool _isInitilized;
         private bool _ignoreNameChange;
         private bool _autoRotate;
-        private Sandbox.ModAPI.Ingame.IMySolarPanel _solarPanelEntity;
+        private IMySolarPanel _solarPanelEntity;
         //private string _info = "";
         //private IMyMotorStator motorBase1;
         private IMyMotorStator motorBase2;
@@ -40,7 +41,7 @@ namespace midspace.SolarTracker
                 // Use this space to hook up events. NOT TO PROCESS ANYTHING.
                 _isInitilized = true;
 
-                _solarPanelEntity = (Sandbox.ModAPI.Ingame.IMySolarPanel)Entity;
+                _solarPanelEntity = (IMySolarPanel)Entity;
                 ((Sandbox.ModAPI.IMyTerminalBlock)_solarPanelEntity).CustomNameChanged += _solarPanelEntity_CustomNameChanged;
             }
         }
@@ -151,7 +152,7 @@ namespace midspace.SolarTracker
 
             //MyAPIGateway.Utilities.ShowMessage("step", "1");
 
-            var solarPanelEntity = (Sandbox.ModAPI.Ingame.IMySolarPanel)Entity;
+            var solarPanelEntity = (IMySolarPanel)Entity;
             var name = solarPanelEntity.CustomName;
             if (!string.IsNullOrEmpty(name))
             {
