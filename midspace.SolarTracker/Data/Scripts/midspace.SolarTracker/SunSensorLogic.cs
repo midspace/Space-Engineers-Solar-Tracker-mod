@@ -229,6 +229,8 @@ namespace midspace.SolarTracker
             if (rotateDirection == RotateDirections.PitchPositive) turnAngle = -1 * heading.Y;
             if (rotateDirection == RotateDirections.PitchNegative) turnAngle = heading.Y;
             float velocity = GetTurnVelocity(turnAngle);
+            if (velocity > 4) velocity = 4; // cap off the speed.
+            if (velocity < -4) velocity = -4;
 
             //_exceptionInfo = string.Format("{0} {1} / El:{2:N} Az:{3:N} ", _rotorDirections[0], velocity, turnAngle.X, turnAngle.Y);
 
@@ -408,36 +410,12 @@ namespace midspace.SolarTracker
 
             if (motorBase1 != null)
             {
-                var motorBase = ((IMyCubeBlock)motorBase1).GetObjectBuilderCubeBlock() as MyObjectBuilder_MotorBase;
-
-                foreach (var grid in gridGroup)
-                {
-                    blocks = new List<IMySlimBlock>();
-                    grid.GetBlocks(blocks, b => b != null && b.FatBlock != null && b.FatBlock.EntityId == motorBase.RotorEntityId);
-
-                    if (blocks.Count > 0)
-                    {
-                        motorRotor1 = blocks[0].FatBlock;
-                        break;
-                    }
-                }
+                motorRotor1 = motorBase1.Rotor;
             }
 
             if (motorBase2 != null)
             {
-                var motorBase = ((IMyCubeBlock)motorBase2).GetObjectBuilderCubeBlock() as MyObjectBuilder_MotorBase;
-
-                foreach (var grid in gridGroup)
-                {
-                    blocks = new List<IMySlimBlock>();
-                    grid.GetBlocks(blocks, b => b != null && b.FatBlock != null && b.FatBlock.EntityId == motorBase.RotorEntityId);
-
-                    if (blocks.Count > 0)
-                    {
-                        motorRotor2 = blocks[0].FatBlock;
-                        break;
-                    }
-                }
+                motorRotor2 = motorBase2.Rotor;
             }
 
             if (_attachedRotors.Count == 0)

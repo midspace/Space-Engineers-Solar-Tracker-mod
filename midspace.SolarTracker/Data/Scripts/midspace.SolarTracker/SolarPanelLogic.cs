@@ -185,10 +185,11 @@ namespace midspace.SolarTracker
                 if (blocks[0].FatBlock.BlockDefinition.TypeId == typeof(MyObjectBuilder_MotorAdvancedRotor)
                     || blocks[0].FatBlock.BlockDefinition.TypeId == typeof(MyObjectBuilder_MotorRotor))
                 {
-                    var motorCube = Support.FindRotorBase(blocks[0].FatBlock.EntityId);
-                    if (motorCube == null)
+                    IMyMotorRotor motorRotor = blocks[0].FatBlock as IMyMotorRotor;
+
+                    if (motorRotor == null || motorRotor.Stator == null)
                         return;
-                    motorBase2 = (IMyMotorStator)motorCube;
+                    motorBase2 = (IMyMotorStator)motorRotor;
                 }
                 else
                 {
