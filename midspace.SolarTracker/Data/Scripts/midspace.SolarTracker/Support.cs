@@ -66,6 +66,7 @@ namespace midspace.SolarTracker
         {
             baseSunDirection = Vector3.Zero;
 
+            // -- Sandbox.Game.SessionComponents.MySectorWeatherComponent.Init() --
             var cpnt = MyAPIGateway.Session.GetCheckpoint("null");
             foreach (var comp in cpnt.SessionComponents)
             {
@@ -90,16 +91,20 @@ namespace midspace.SolarTracker
             if (Vector3.IsZero(baseSunDirection))
                 baseSunDirection = ed.SunProperties.SunDirectionNormalized;
 
+            // -- Sandbox.Game.SessionComponents.MySectorWeatherComponent.BeforeStart() --
             float num = Math.Abs(baseSunDirection.X) + Math.Abs(baseSunDirection.Y) + Math.Abs(baseSunDirection.Z);
-            if (num < 0.001)
-            {
-                baseSunDirection = ed.SunProperties.SunDirectionNormalized;
-                sunRotationAxis = ed.SunProperties.SunRotationAxis;
-            }
+            if ((double)num < 0.001)
+                baseSunDirection = ed.SunProperties.BaseSunDirectionNormalized;
+
+            // -- VRage.Game.MySunProperties.SunRotationAxis --
+            num = Math.Abs(Vector3.Dot(baseSunDirection, Vector3.Up));
+            Vector3 result;
+            if (num > 0.95f)
+                result = Vector3.Cross(Vector3.Cross(baseSunDirection, Vector3.Left), baseSunDirection);
             else
-            {
-                sunRotationAxis = ed.SunProperties.SunRotationAxis;
-            }
+                result = Vector3.Cross(Vector3.Cross(baseSunDirection, Vector3.Up), baseSunDirection);
+            result.Normalize();
+            sunRotationAxis = result;
 #endif
         }
     }
