@@ -30,7 +30,7 @@ namespace midspace.SolarTracker
         private IMySensorBlock _sunSensorEntity;
         private string _exceptionInfo = "";
         private List<IMyEntity> _attachedRotors = new List<IMyEntity>();
-        private List<RotateDirections> _rotorDirections = new List<RotateDirections>();
+        private readonly List<RotateDirections> _rotorDirections = new List<RotateDirections>();
         private bool Debug;
         private int _frameCounter;
 
@@ -44,8 +44,35 @@ namespace midspace.SolarTracker
             Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;
         }
 
+
         private void Initilize()
         {
+            if (_isInitialized)
+                return;
+
+            WriteDebug("UpdateOnceBeforeFrame", "Start = {0}", _isInitialized);
+            // Single player or hosted.
+            if (!_isInitialized && MyAPIGateway.Session != null && MyAPIGateway.Session.Player != null && MyAPIGateway.Multiplayer.IsServer && !MyAPIGateway.Utilities.IsDedicated)
+                InitilizeServerClient();
+
+            // Dedicated server.
+            if (!_isInitialized && MyAPIGateway.Utilities != null && MyAPIGateway.Multiplayer != null
+                && MyAPIGateway.Session != null && MyAPIGateway.Utilities.IsDedicated && MyAPIGateway.Multiplayer.IsServer)
+                InitilizeServerClient();
+
+            WriteDebug("UpdateOnceBeforeFrame", "End = {0}", _isIsValid);
+
+            if (!_isIsValid)
+                return;
+
+            // Entity CustomName hasn't been populated in the Init, and this is the only oppurtunity to grab the value first time.
+            SetupCustomTrackingProperties();
+            ResetSunSensor(Entity as Sandbox.ModAPI.IMySensorBlock);
+        }
+
+        private void InitilizeServerClient()
+        {
+            WriteDebug("Initilize", "Start");
             _isInitialized = true; // Set this first to block any other calls from UpdateAfterSimulation().
             _sunSensorEntity = (IMySensorBlock)Entity;
             _isIsValid = (_sunSensorEntity.BlockDefinition.SubtypeName.Equals("SmallSunSensor", StringComparison.InvariantCultureIgnoreCase)
@@ -53,6 +80,7 @@ namespace midspace.SolarTracker
 
             if (_isIsValid)
                 ((IMyTerminalBlock)_sunSensorEntity).CustomNameChanged += _iMyTerminalBlock_CustomNameChanged;
+            WriteDebug("Initilize", "End = {0}", _isIsValid);
         }
 
         public override void Close()
@@ -92,6 +120,8 @@ namespace midspace.SolarTracker
 
         public override void UpdateAfterSimulation()
         {
+            Initilize();
+
             if (!_isInitialized)
                 return;
 
@@ -117,6 +147,7 @@ namespace midspace.SolarTracker
             if (string.IsNullOrEmpty(terminalEntity.CustomName) || !terminalEntity.IsWorking || !terminalEntity.IsFunctional)
                 return;
 
+            //WriteDebug("UpdateAfterSimulation", "Start = {0} {1} {2} {3}", _isInitialized, _isIsValid, _autoTrackOn, _attachedRotors.Count);
 
             Vector2 ang = Vector2.Zero;
             // TODO: run as background, if I can find a suitable world to test it on FIRST!
@@ -201,8 +232,6 @@ namespace midspace.SolarTracker
                 }
             });
 
-
-
         }
 
         public override void UpdateAfterSimulation10()
@@ -262,25 +291,6 @@ namespace midspace.SolarTracker
             //else if (angle > +0.1f) return +0.02f;
             //else if (angle < -0.1f) return -0.02f;
             //return 0;
-        }
-
-        public override void UpdateOnceBeforeFrame()
-        {
-            // Single player or hosted.
-            if (!_isInitialized && MyAPIGateway.Session != null && MyAPIGateway.Session.Player != null && MyAPIGateway.Multiplayer.IsServer && !MyAPIGateway.Utilities.IsDedicated)
-                Initilize();
-
-            // Dedicated server.
-            if (!_isInitialized && MyAPIGateway.Utilities != null && MyAPIGateway.Multiplayer != null
-                && MyAPIGateway.Session != null && MyAPIGateway.Utilities.IsDedicated && MyAPIGateway.Multiplayer.IsServer)
-                Initilize();
-
-            if (!_isIsValid)
-                return;
-
-            // Entity CustomName hasn't been populated in the Init, and this is the only oppurtunity to grab the value first time.
-            SetupCustomTrackingProperties();
-            ResetSunSensor(Entity as Sandbox.ModAPI.IMySensorBlock);
         }
 
         private void ResetSunSensor(Sandbox.ModAPI.IMySensorBlock sensorBlock)
@@ -540,19 +550,19 @@ namespace midspace.SolarTracker
         {
             if (Debug)
             {
-                //if (SunSensorScript.Instance != null)
-                //    SunSensorScript.Instance.ServerLogger.Write(text, args);
+                //    if (SunSensorScript.Instance != null)
+                //        SunSensorScript.Instance.ServerLogger.Write(text, args);
 
-                //        string message = text;
-                //        if (args != null && args.Length != 0)
-                //            message = string.Format(text, args);
+                //    string message = text;
+                //    if (args != null && args.Length != 0)
+                //        message = string.Format(text, args);
 
-                //        MyAPIGateway.Utilities.ShowMessage(sender, message);
+                //    MyAPIGateway.Utilities.ShowMessage(sender, message);
 
-                //        if (MyAPIGateway.Utilities.IsDedicated)
-                //            VRage.Utils.MyLog.Default.WriteLineAndConsole("##" + sender + "## " + message);
-                //        else
-                //            VRage.Utils.MyLog.Default.WriteLine("##" + sender + "## " + message);
+                //    if (MyAPIGateway.Utilities.IsDedicated)
+                //        VRage.Utils.MyLog.Default.WriteLineAndConsole("##" + sender + "## " + message);
+                //    else
+                //        VRage.Utils.MyLog.Default.WriteLine("##" + sender + "## " + message);
             }
         }
     }
