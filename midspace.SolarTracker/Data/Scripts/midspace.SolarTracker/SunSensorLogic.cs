@@ -265,10 +265,16 @@ namespace midspace.SolarTracker
 
             WriteDebug("Turn", "Rotor Velocity {0}", velocity);
 
-            if (velocity == 0)
+            if (velocity == 0) // Has to be 0.
             {
-                var action = motorBase.GetActionWithName("OnOff_Off");
-                action.Apply(motorBase);
+                // Don't switch of Advanced rotors, because they need to be powered for the conveying of stuff.
+                if (motorBase.BlockDefinition.TypeId != typeof(MyObjectBuilder_MotorAdvancedStator))
+                {
+                    var action = motorBase.GetActionWithName("OnOff_Off");
+                    action.Apply(motorBase);
+                }
+                else
+                    motorBase.SetValue("Velocity", 0.0f);
             }
             else
             {
@@ -341,8 +347,12 @@ namespace midspace.SolarTracker
             var definition = MyDefinitionManager.Static.GetCubeBlockDefinition(motorBase.BlockDefinition);
             var motorStatorDefinition = definition as MyMotorStatorDefinition;
 
-            var action = motorBase.GetActionWithName("OnOff_Off");
-            action.Apply(motorBase);
+            // Don't switch of Advanced rotors, because they need to be powered for the conveying of stuff.
+            if (motorBase.BlockDefinition.TypeId != typeof(MyObjectBuilder_MotorAdvancedStator))
+            {
+                var action = motorBase.GetActionWithName("OnOff_Off");
+                action.Apply(motorBase);
+            }
 
             motorBase.SetValue("Torque", motorStatorDefinition.MaxForceMagnitude);
             motorBase.SetValue("BrakingTorque", motorStatorDefinition.MaxForceMagnitude);

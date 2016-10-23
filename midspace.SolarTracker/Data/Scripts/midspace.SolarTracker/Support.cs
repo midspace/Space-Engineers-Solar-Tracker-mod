@@ -1,9 +1,7 @@
 namespace midspace.SolarTracker
 {
     using System;
-    using Sandbox.Definitions;
     using Sandbox.ModAPI;
-    using VRage.Game;
     using VRage.Game.ObjectBuilders;
     using VRageMath;
 
@@ -44,34 +42,15 @@ namespace midspace.SolarTracker
                     _hasBaseSun = true;
                 }
 
-#if STABLE
                 if (MyAPIGateway.Session.SessionSettings.EnableSunRotation)
                 {
-                    float angle = 0;
-                    if (MyAPIGateway.Session.SessionSettings.EnableSunRotation)
-                        angle = MathHelper.TwoPi*(float) ((MyAPIGateway.Session.ElapsedGameTime().TotalMinutes + leadTime)/MyAPIGateway.Session.SessionSettings.SunRotationIntervalMinutes);
-
+                    float angle = MathHelper.TwoPi * (float)((MyAPIGateway.Session.ElapsedGameTime().TotalMinutes + leadTime) / MyAPIGateway.Session.SessionSettings.SunRotationIntervalMinutes);
                     Vector3 finalSunDirection = Vector3.Transform(_baseSunDirection, Matrix.CreateFromAxisAngle(_sunRotationAxis, angle));
-                    finalSunDirection.Normalize();
-                    _sunDirection = -finalSunDirection;
-                }
-                else
-                    _sunDirection = _baseSunDirection;
-#endif
-#if !STABLE
-                Vector3 finalSunDirection;
-                if (MyAPIGateway.Session.SessionSettings.EnableSunRotation)
-                {
-                    float angle = 0;
-                    angle = MathHelper.TwoPi * (float)((MyAPIGateway.Session.ElapsedGameTime().TotalMinutes + leadTime) / MyAPIGateway.Session.SessionSettings.SunRotationIntervalMinutes);
-
-                    finalSunDirection = Vector3.Transform(_baseSunDirection, Matrix.CreateFromAxisAngle(_sunRotationAxis, angle));
                     finalSunDirection.Normalize();
                     _sunDirection = finalSunDirection;
                 }
                 else
                     _sunDirection = _baseSunDirection;
-#endif
             }
             return _sunDirection;
         }
@@ -80,64 +59,37 @@ namespace midspace.SolarTracker
         {
             baseSunDirection = Vector3.Zero;
 
-#if STABLE
-            // -- Sandbox.Game.SessionComponents.MySectorWeatherComponent.Init() --
-            var cpnt = MyAPIGateway.Session.GetCheckpoint("null");
-            foreach (var comp in cpnt.SessionComponents)
-            {
-                var weatherComp = comp as MyObjectBuilder_SectorWeatherComponent;
-                if (weatherComp != null)
-                {
-                    baseSunDirection = weatherComp.BaseSunDirection;
-                }
-            }
+            // -- MySector.InitEnvironmentSettings --
+            var environment = MyAPIGateway.Session.GetSector().Environment;
+            Vector3 baseSunDirectionNormalized;
+            Vector3.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out baseSunDirectionNormalized);
 
             if (!MyAPIGateway.Session.SessionSettings.EnableSunRotation)
             {
-                var ed = ((MyObjectBuilder_EnvironmentDefinition)MyDefinitionManager.Static.EnvironmentDefinition.GetObjectBuilder());
-                baseSunDirection = ed.SunDirection;
-                sunRotationAxis = Vector3.Zero;
-                return;
-            }
-
-            float num = Math.Abs(Vector3.Dot(baseSunDirection, Vector3.Up));
-            if (num > 0.95f)
-                sunRotationAxis = Vector3.Cross(Vector3.Cross(baseSunDirection, Vector3.Left), baseSunDirection);
-            else
-                sunRotationAxis = Vector3.Cross(Vector3.Cross(baseSunDirection, Vector3.Up), baseSunDirection);
-            sunRotationAxis.Normalize();
-#endif
-
-#if !STABLE
-            var ed = ((MyObjectBuilder_EnvironmentDefinition)MyDefinitionManager.Static.EnvironmentDefinition.GetObjectBuilder());
-            if (!MyAPIGateway.Session.SessionSettings.EnableSunRotation)
-            {
-                baseSunDirection = ed.SunProperties.SunDirectionNormalized;
+                baseSunDirection = baseSunDirectionNormalized;
                 sunRotationAxis = Vector3.Zero;
                 return;
             }
 
             // -- Sandbox.Game.SessionComponents.MySectorWeatherComponent.Init() --
             var cpnt = MyAPIGateway.Session.GetCheckpoint("null");
+            MyObjectBuilder_SectorWeatherComponent weatherComp = null;
             foreach (var comp in cpnt.SessionComponents)
             {
-                var weatherComp = comp as MyObjectBuilder_SectorWeatherComponent;
-                if (weatherComp != null)
-                {
-                    baseSunDirection = weatherComp.BaseSunDirection;
-                }
+                MyObjectBuilder_SectorWeatherComponent component = comp as MyObjectBuilder_SectorWeatherComponent;
+                if (component != null)
+                    weatherComp = component;
             }
 
-            if (Vector3.IsZero(baseSunDirection))
-                baseSunDirection = ed.SunProperties.SunDirectionNormalized;
+            if (weatherComp != null && !weatherComp.BaseSunDirection.IsZero)
+                baseSunDirection = weatherComp.BaseSunDirection;
 
-            // -- Sandbox.Game.SessionComponents.MySectorWeatherComponent.BeforeStart() --
+            // -- Sandbox.Game.SessionComponents.MySectorWeatherComponent.BeforeStart() -- 
             float num = Math.Abs(baseSunDirection.X) + Math.Abs(baseSunDirection.Y) + Math.Abs(baseSunDirection.Z);
             if ((double)num < 0.001)
-                baseSunDirection = ed.SunProperties.BaseSunDirectionNormalized;
+                baseSunDirection = baseSunDirectionNormalized;
 
             // -- VRage.Game.MySunProperties.SunRotationAxis --
-            Vector3 baseSunDirectionNormalized = ed.SunProperties.BaseSunDirectionNormalized;
             float num2 = Math.Abs(Vector3.Dot(baseSunDirectionNormalized, Vector3.Up));
             Vector3 result;
             if (num2 > 0.95f)
@@ -146,7 +98,6 @@ namespace midspace.SolarTracker
                 result = Vector3.Cross(Vector3.Cross(baseSunDirectionNormalized, Vector3.Up), baseSunDirectionNormalized);
             result.Normalize();
             sunRotationAxis = result;
-#endif
         }
     }
 }
