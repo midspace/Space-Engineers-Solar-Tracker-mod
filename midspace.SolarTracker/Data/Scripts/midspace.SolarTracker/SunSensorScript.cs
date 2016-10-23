@@ -103,9 +103,9 @@
                 }
 
                 ServerLogger.Write("Closed");
-                ServerLogger.Terminate();
             }
 
+            ServerLogger.Terminate();
             base.UnloadData();
         }
 

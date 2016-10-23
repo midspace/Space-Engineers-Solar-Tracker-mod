@@ -58,10 +58,11 @@
             _delayedWrite = delayedWrite;
         }
 
-        ~TextLogger()
-        {
-            Terminate();
-        }
+        // Because Keen hate Finalizers?
+        //~TextLogger()
+        //{
+        //    Terminate();
+        //}
 
         #endregion
 
