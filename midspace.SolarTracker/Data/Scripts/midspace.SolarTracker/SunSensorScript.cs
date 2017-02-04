@@ -15,7 +15,7 @@
 
         private bool _isInitialized;
         //private bool _isClientRegistered;
-        private bool _isServerRegistered;
+        public bool IsServerRegistered;
         private Timer _timerEvents;
 
         public static SunSensorScript Instance;
@@ -29,7 +29,8 @@
 
         public override void UpdateAfterSimulation()
         {
-            Instance = this;
+            if (Instance == null)
+                Instance = this;
 
             // This needs to wait until the MyAPIGateway.Session.Player is created, as running on a Dedicated server can cause issues.
             // It would be nicer to just read a property that indicates this is a dedicated server, and simply return.
@@ -67,8 +68,8 @@
         private void InitServer()
         {
             _isInitialized = true; // Set this first to block any other calls from UpdateAfterSimulation().
-            _isServerRegistered = true;
-            ServerLogger.Init("SunSensorServer.Log", false, 10); // comment this out if logging is not required for the Server.
+            IsServerRegistered = true;
+            ServerLogger.Init("SunSensorServer.Log", false, 0); // comment this out if logging is not required for the Server.
             ServerLogger.Write("SunSensor Server Log Started");
             if (ServerLogger.IsActive)
                 VRage.Utils.MyLog.Default.WriteLine(String.Format("##Mod## SunSensor Server Logging File: {0}", ServerLogger.LogFile));
@@ -92,7 +93,7 @@
             //    ClientLogger.Terminate();
             //}
 
-            if (_isServerRegistered)
+            if (IsServerRegistered)
             {
                 if (_timerEvents != null)
                 {

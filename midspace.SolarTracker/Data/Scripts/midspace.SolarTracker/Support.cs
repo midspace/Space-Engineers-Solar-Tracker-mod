@@ -42,6 +42,25 @@ namespace midspace.SolarTracker
                     _hasBaseSun = true;
                 }
 
+                // The Sun doesn't turn the a Dedicated Server. :(
+                // None of these give anything but a static position on a Server.
+
+                //var environment = MyAPIGateway.Session.GetSector().Environment;
+                //Vector3D sunDirection1;
+                //Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out sunDirection1);
+                //WriteDebug("SunDirection1", "{0} {1} {2}", sunDirection.X, sunDirection.Y, sunDirection.Z);
+
+                //var ed = ((MyObjectBuilder_EnvironmentDefinition)MyDefinitionManager.Static.EnvironmentDefinition.GetObjectBuilder());
+                //WriteDebug("SunDirection2", "{0} {1} {2}", ed.SunDirection.X, ed.SunDirection.Y, ed.SunDirection.Z);
+
+                //environment = MyAPIGateway.Session.GetWorld().Sector.Environment;
+                //Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out sunDirection1);
+                //WriteDebug("SunDirection3", "{0} {1} {2}", sunDirection.X, sunDirection.Y, sunDirection.Z);
+
+                //MyAPIGateway.Multiplayer.
+                //MyAPIGateway.Utilities.ConfigDedicated.SessionSettings.
+                //MyAPIGateway.Session.GetCheckpoint("null").;
+
                 if (MyAPIGateway.Session.SessionSettings.EnableSunRotation)
                 {
                     float angle = MathHelper.TwoPi * (float)((MyAPIGateway.Session.ElapsedGameTime().TotalMinutes + leadTime) / MyAPIGateway.Session.SessionSettings.SunRotationIntervalMinutes);
@@ -86,7 +105,7 @@ namespace midspace.SolarTracker
 
             // -- Sandbox.Game.SessionComponents.MySectorWeatherComponent.BeforeStart() -- 
             float num = Math.Abs(baseSunDirection.X) + Math.Abs(baseSunDirection.Y) + Math.Abs(baseSunDirection.Z);
-            if ((double)num < 0.001)
+            if (num < 0.001D)
                 baseSunDirection = baseSunDirectionNormalized;
 
             // -- VRage.Game.MySunProperties.SunRotationAxis --

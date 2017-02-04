@@ -15,7 +15,7 @@ namespace midspace.SolarTracker
     using VRage.ObjectBuilders;
     using VRageMath;
 
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SensorBlock))]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SensorBlock), true)]
     public class SunSensorLogic : MyGameLogicComponent
     {
         enum RotateDirections { Unknown, RollPositive, RollNegative, PitchPositive, PitchNegative, YawPositive, YawNegative };
@@ -31,7 +31,7 @@ namespace midspace.SolarTracker
         private string _exceptionInfo = "";
         private List<IMyEntity> _attachedRotors = new List<IMyEntity>();
         private readonly List<RotateDirections> _rotorDirections = new List<RotateDirections>();
-        private bool Debug;
+        private bool _debug;
         private int _frameCounter;
 
         #endregion
@@ -47,6 +47,8 @@ namespace midspace.SolarTracker
 
         private void Initilize()
         {
+            if (SunSensorScript.Instance == null || !SunSensorScript.Instance.IsServerRegistered)
+                return;
             if (_isInitialized)
                 return;
 
@@ -86,7 +88,7 @@ namespace midspace.SolarTracker
         public override void Close()
         {
             if (_isInitialized && _isIsValid)
-                ((IMyTerminalBlock)_sunSensorEntity).CustomNameChanged -= _iMyTerminalBlock_CustomNameChanged;
+                _sunSensorEntity.CustomNameChanged -= _iMyTerminalBlock_CustomNameChanged;
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false)
@@ -131,7 +133,7 @@ namespace midspace.SolarTracker
 
             _frameCounter = 0;
 
-            Debug = ((IMyTerminalBlock)Entity).IsWorking && ((IMyTerminalBlock)Entity).ShowOnHUD;
+            _debug = ((IMyTerminalBlock)Entity).IsWorking && ((IMyTerminalBlock)Entity).ShowOnHUD;
 
             if (!string.IsNullOrEmpty(_exceptionInfo))
                 WriteDebug("Info", _exceptionInfo);
@@ -152,45 +154,23 @@ namespace midspace.SolarTracker
             Vector2 ang = Vector2.Zero;
             // TODO: run as background, if I can find a suitable world to test it on FIRST!
 
-            MyAPIGateway.Parallel.Start(delegate ()
+            MyAPIGateway.Parallel.Start(delegate
             // Background processing occurs within this block.
             {
                 try
                 {
                     var sunDirection = Support.GetSunDirection();
-                    ang = GetRotationAngle(Entity.WorldMatrix, sunDirection);
+                    //ang = GetRotationAngle(Entity.WorldMatrix, sunDirection);
+                    ang = GetRotationAngle(Entity.WorldMatrix.Forward, Entity.WorldMatrix.Up, Entity.WorldMatrix.Right, sunDirection);
                 }
                 catch (Exception ex)
                 {
                 }
-
-            }, delegate ()
+            },
             // when the background processing is finished, this block will run foreground.
-            {
+            delegate {
                 try
                 {
-
-
-                    // The Sun doesn't turn the a Dedicated Server. :(
-                    // None of these give anything but a static position on a Server.
-
-                    //var environment = MyAPIGateway.Session.GetSector().Environment;
-                    //Vector3D sunDirection1;
-                    //Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out sunDirection1);
-                    //WriteDebug("SunDirection1", "{0} {1} {2}", sunDirection.X, sunDirection.Y, sunDirection.Z);
-
-                    //var ed = ((MyObjectBuilder_EnvironmentDefinition)MyDefinitionManager.Static.EnvironmentDefinition.GetObjectBuilder());
-                    //WriteDebug("SunDirection2", "{0} {1} {2}", ed.SunDirection.X, ed.SunDirection.Y, ed.SunDirection.Z);
-
-                    //environment = MyAPIGateway.Session.GetWorld().Sector.Environment;
-                    //Vector3D.CreateFromAzimuthAndElevation(environment.SunAzimuth, environment.SunElevation, out sunDirection1);
-                    //WriteDebug("SunDirection3", "{0} {1} {2}", sunDirection.X, sunDirection.Y, sunDirection.Z);
-
-                    //MyAPIGateway.Multiplayer.
-                    //MyAPIGateway.Utilities.ConfigDedicated.SessionSettings.
-                    //MyAPIGateway.Session.GetCheckpoint("null").;
-
-
                     // Check Ownership.
                     var block = (IMyCubeBlock)Entity;
 
@@ -207,7 +187,7 @@ namespace midspace.SolarTracker
 
                         if (rotorBase != null && !rotorBase.Closed && rotorBase.HasPlayerAccess(block.OwnerId))
                         {
-                            WriteDebug("Turn", "'{0}'", rotorBase.CustomName);
+                            //WriteDebug("Turn", "'{0}'", rotorBase.CustomName);
                             TurnRotor(_attachedRotors[0], _attachedRotors[1], ang, _rotorDirections[0]);
                         }
                     }
@@ -219,7 +199,7 @@ namespace midspace.SolarTracker
 
                         if (rotorBase != null && !rotorBase.Closed && rotorBase.HasPlayerAccess(block.OwnerId))
                         {
-                            WriteDebug("Turn", "'{0}'", rotorBase.CustomName);
+                            //WriteDebug("Turn", "'{0}'", rotorBase.CustomName);
                             TurnRotor(_attachedRotors[2], _attachedRotors[3], ang, _rotorDirections[1]);
                         }
                     }
@@ -228,10 +208,9 @@ namespace midspace.SolarTracker
                 {
                     var message = ex.Message.Replace("\r", " ").Replace("\n", " ");
                     message = message.Substring(0, Math.Min(message.Length, 100));
-                    MyAPIGateway.Utilities.ShowMessage("Error", String.Format("{0}", message));
+                    MyAPIGateway.Utilities.ShowMessage("Error", string.Format("{0}", message));
                 }
             });
-
         }
 
         public override void UpdateAfterSimulation10()
@@ -257,13 +236,11 @@ namespace midspace.SolarTracker
             if (rotateDirection == RotateDirections.YawNegative) turnAngle = -1 * heading.X;
             if (rotateDirection == RotateDirections.PitchPositive) turnAngle = -1 * heading.Y;
             if (rotateDirection == RotateDirections.PitchNegative) turnAngle = heading.Y;
-            float velocity = GetTurnVelocity(turnAngle);
-            if (velocity > 4) velocity = 4; // cap off the speed.
-            if (velocity < -4) velocity = -4;
+            float velocity = GetTurnVelocity(turnAngle, 4); // cap off the speed.
 
             //_exceptionInfo = string.Format("{0} {1} / El:{2:N} Az:{3:N} ", _rotorDirections[0], velocity, turnAngle.X, turnAngle.Y);
 
-            WriteDebug("Turn", "Rotor Velocity {0}", velocity);
+            //WriteDebug("Turn", "Rotor Velocity {0}", velocity);
 
             if (velocity == 0) // Has to be 0.
             {
@@ -286,9 +263,9 @@ namespace midspace.SolarTracker
             }
         }
 
-        private float GetTurnVelocity(float angle)
+        private float GetTurnVelocity(float angle, float limit)
         {
-            return (angle > +0.1f || angle < -0.1f) ? Math.Min(angle / 5f, 10) : 0f;
+            return (angle > +0.1f || angle < -0.1f) ? Math.Max(Math.Min(angle / 5f, limit), -limit) : 0f;
 
             //if (angle > +5.0f) return 1.2f;
             //else if (angle < -5.0f) return -1.2f;
@@ -299,7 +276,7 @@ namespace midspace.SolarTracker
             //return 0;
         }
 
-        private void ResetSunSensor(Sandbox.ModAPI.IMySensorBlock sensorBlock)
+        private void ResetSunSensor(IMySensorBlock sensorBlock)
         {
             if (sensorBlock == null)
                 return;
@@ -361,19 +338,21 @@ namespace midspace.SolarTracker
 
         private void SetupCustomTrackingProperties()
         {
+            WriteDebug("check", "SetupCustomTrackingProperties");
+            
             _exceptionInfo = "";
 
-            var solarPanelEntity = (IMySensorBlock)Entity;
-            if (string.IsNullOrEmpty(solarPanelEntity.CustomName))
+            IMySensorBlock sunSensorEntity = (IMySensorBlock)Entity;
+            if (string.IsNullOrEmpty(sunSensorEntity.CustomName))
             {
                 _autoTrackOn = false;
                 return;
             }
 
-            var match = Regex.Match(solarPanelEntity.CustomName, @"(\s+|^)/AT\s*(?:\[(?<NAME>[^\]]*)\]){1,2}(\s+|$)", RegexOptions.IgnoreCase);
+            var match = Regex.Match(sunSensorEntity.CustomName, @"(\s+|^)/AT\s*(?:\[(?<NAME>[^\]]*)\]){1,2}(\s+|$)", RegexOptions.IgnoreCase);
             if (!match.Success)
             {
-                match = Regex.Match(solarPanelEntity.CustomName, @"(\s+|^)/AT\s*(?:\((?<NAME>[^\)]*)\)){1,2}(\s+|$)", RegexOptions.IgnoreCase);
+                match = Regex.Match(sunSensorEntity.CustomName, @"(\s+|^)/AT\s*(?:\((?<NAME>[^\)]*)\)){1,2}(\s+|$)", RegexOptions.IgnoreCase);
                 if (!match.Success)
                 {
                     _autoTrackOn = false;
@@ -397,61 +376,49 @@ namespace midspace.SolarTracker
 
             var gridGroup = Entity.Parent.GetAttachedGrids();
 
-            List<IMySlimBlock> blocks;
 
             foreach (var grid in gridGroup)
             {
+                List<IMySlimBlock> blocks;
                 if (motorBase1 == null)
                 {
                     blocks = new List<IMySlimBlock>();
-                    grid.GetBlocks(blocks, b => b.FatBlock != null && b.FatBlock is IMyMotorStator && ((IMyTerminalBlock)b.FatBlock).CustomName.Equals(rotor1Name, StringComparison.InvariantCultureIgnoreCase));
+                    grid.GetBlocks(blocks, b => b.FatBlock is IMyMotorStator && ((IMyTerminalBlock)b.FatBlock).CustomName.Equals(rotor1Name, StringComparison.InvariantCultureIgnoreCase));
                     if (blocks.Count > 0)
-                    {
                         motorBase1 = (IMyMotorStator)blocks[0].FatBlock;
-                    }
                 }
 
                 if (motorBase2 == null && !string.IsNullOrEmpty(rotor2Name))
                 {
                     blocks = new List<IMySlimBlock>();
-                    grid.GetBlocks(blocks, b => b.FatBlock != null && b.FatBlock is IMyMotorStator && ((IMyTerminalBlock)b.FatBlock).CustomName.Equals(rotor2Name, StringComparison.InvariantCultureIgnoreCase));
+                    grid.GetBlocks(blocks, b => b.FatBlock is IMyMotorStator && ((IMyTerminalBlock)b.FatBlock).CustomName.Equals(rotor2Name, StringComparison.InvariantCultureIgnoreCase));
 
                     if (blocks.Count > 0)
-                    {
                         motorBase2 = (IMyMotorStator)blocks[0].FatBlock;
-                    }
                 }
             }
 
             if (motorBase1 == motorBase2)
-            {
                 motorBase2 = null;
-            }
 
             if (motorBase1 != null)
-            {
-                motorRotor1 = motorBase1.Rotor;
-            }
+                motorRotor1 = motorBase1.Top;
 
             if (motorBase2 != null)
-            {
-                motorRotor2 = motorBase2.Rotor;
-            }
+                motorRotor2 = motorBase2.Top;
 
             if (_attachedRotors.Count == 0)
             {
                 if (FindRotorLinks((IMyCubeGrid)Entity.Parent, motorBase1, motorRotor1, ref _attachedRotors, ref baseRotation1))
-                {
                     FindRotorLinks((IMyCubeGrid)_attachedRotors[_attachedRotors.Count - 1].Parent, motorBase2, motorRotor2, ref _attachedRotors, ref baseRotation2);
-                }
             }
             if (_attachedRotors.Count == 0)
             {
                 if (FindRotorLinks((IMyCubeGrid)Entity.Parent, motorBase2, motorRotor2, ref _attachedRotors, ref baseRotation2))
-                {
                     FindRotorLinks((IMyCubeGrid)_attachedRotors[_attachedRotors.Count - 1].Parent, motorBase1, motorRotor1, ref _attachedRotors, ref baseRotation1);
-                }
             }
+
+            WriteDebug("check", "### SetupCustomTrack AAA Count:{0}", _attachedRotors.Count);
 
 
             //_exceptionInfo += string.Format("Count: {0}. ",_attachedRotors.Count);
@@ -459,9 +426,9 @@ namespace midspace.SolarTracker
             if (_attachedRotors.Count >= 2)
             {
                 //var cross = GetRotationAngle(solarPanelEntity.WorldMatrix, _attachedRotors[0].WorldMatrix.Up); // Unsure.
-                var cross = GetRotationAngle(solarPanelEntity.LocalMatrix, _attachedRotors[0].LocalMatrix.Up); // Works
+                //var cross = GetRotationAngle(sunSensorEntity.LocaEntity.LocalMatrix, _attachedRotors[0].LocalMatrix.Up); // Works
+                var cross = GetRotationAngle(sunSensorEntity.LocalMatrix.Forward, sunSensorEntity.LocalMatrix.Up, sunSensorEntity.LocalMatrix.Right, _attachedRotors[0].LocalMatrix.Up);  // Works
                 cross.Normalize();
-                //cross = Vector2.Normalize(cross);
                 RotateDirections rotate = RotateDirections.Unknown;
 
                 if (cross.Y == +1 * baseRotation1) rotate = RotateDirections.YawPositive;
@@ -469,8 +436,11 @@ namespace midspace.SolarTracker
                 if (cross.X == +1 * baseRotation1) rotate = RotateDirections.PitchPositive;
                 if (cross.X == -1 * baseRotation1) rotate = RotateDirections.PitchNegative;
 
+                WriteDebug("check", "### SetupCustomTrack EEE {0}", rotate);
+
                 _rotorDirections.Add(rotate);
                 // TODO: find rotation.
+
 
                 //_exceptionInfo = string.Format("{0} / {1} {2} / {3}",
                 //solarPanelEntity.LocalMatrix.Forward,
@@ -479,7 +449,9 @@ namespace midspace.SolarTracker
 
             if (_attachedRotors.Count >= 4)
             {
-                var cross = GetRotationAngle(solarPanelEntity.WorldMatrix, _attachedRotors[2].WorldMatrix.Up);
+                WriteDebug("check", "### SetupCustomTrack BBB");
+                //var cross = GetRotationAngle(sunSensorEntity.WorldMatrix, _attachedRotors[2].WorldMatrix.Up); // Works
+                var cross = GetRotationAngle(sunSensorEntity.WorldMatrix.Forward, sunSensorEntity.WorldMatrix.Up, sunSensorEntity.WorldMatrix.Right, _attachedRotors[2].WorldMatrix.Up); // Works
                 //var cross = GetRotationAngle(_attachedRotors[1].LocalMatrix, _attachedRotors[2].LocalMatrix.Up); // DOES NOT WORK.
                 cross.Normalize();
                 //cross = Vector2.Normalize(cross);
@@ -490,11 +462,13 @@ namespace midspace.SolarTracker
                 if (cross.X == -1) rotate = RotateDirections.PitchNegative; // N
                 if (cross.X == +1) rotate = RotateDirections.PitchPositive;  // N
 
+                WriteDebug("check", "### SetupCustomTrack DDD {0}", rotate);
+
                 _rotorDirections.Add(rotate);
 
                 _exceptionInfo = string.Format("{0} / {1} {2} / {3}",
-                _attachedRotors[1].LocalMatrix.Forward,
-                _attachedRotors[2].LocalMatrix.Up, rotate, cross);
+                    _attachedRotors[1].LocalMatrix.Forward,
+                    _attachedRotors[2].LocalMatrix.Up, rotate, cross);
             }
 
 
@@ -533,13 +507,15 @@ namespace midspace.SolarTracker
             return false;
         }
 
-        private static Vector2 GetRotationAngle(MatrixD itemMatrix, Vector3D targetVector)
+        //private static Vector2 GetRotationAngle(MatrixD itemMatrix, Vector3D targetVector)
+        private static Vector2 GetRotationAngle(Vector3D sensorFoward, Vector3D sensorUp, Vector3D sensorRight, Vector3D targetVector)
         {
             targetVector = Vector3D.Normalize(targetVector);
             // http://stackoverflow.com/questions/10967130/how-to-calculate-azimut-elevation-relative-to-a-camera-direction-of-view-in-3d
             // rotate so the camera is pointing straight down the z axis
             // (this is essentially a matrix multiplication)
-            var obj = new Vector3D(Vector3D.Dot(targetVector, itemMatrix.Right), Vector3D.Dot(targetVector, itemMatrix.Up), Vector3D.Dot(targetVector, itemMatrix.Forward));
+            //var obj = new Vector3D(Vector3D.Dot(targetVector, itemMatrix.Right), Vector3D.Dot(targetVector, itemMatrix.Up), Vector3D.Dot(targetVector, itemMatrix.Forward));
+            var obj = new Vector3D(Vector3D.Dot(targetVector, sensorRight), Vector3D.Dot(targetVector, sensorUp), Vector3D.Dot(targetVector, sensorFoward));
             var azimuth = Math.Atan2(obj.X, obj.Z);
 
             var proj = new Vector3D(obj.X, 0, obj.Z);
@@ -558,21 +534,21 @@ namespace midspace.SolarTracker
 
         private void WriteDebug(string sender, string text, params object[] args)
         {
-            if (Debug)
+            if (_debug)
             {
-                //    if (SunSensorScript.Instance != null)
-                //        SunSensorScript.Instance.ServerLogger.Write(text, args);
+                //if (SunSensorScript.Instance != null)
+                //    SunSensorScript.Instance.ServerLogger.Write(text, args);
 
-                //    string message = text;
-                //    if (args != null && args.Length != 0)
-                //        message = string.Format(text, args);
+                //string message = text;
+                //if (args != null && args.Length != 0)
+                //    message = string.Format(text, args);
 
-                //    MyAPIGateway.Utilities.ShowMessage(sender, message);
+                //MyAPIGateway.Utilities.ShowMessage(sender, message);
 
-                //    if (MyAPIGateway.Utilities.IsDedicated)
-                //        VRage.Utils.MyLog.Default.WriteLineAndConsole("##" + sender + "## " + message);
-                //    else
-                //        VRage.Utils.MyLog.Default.WriteLine("##" + sender + "## " + message);
+                //if (MyAPIGateway.Utilities.IsDedicated)
+                //    VRage.Utils.MyLog.Default.WriteLineAndConsole("##" + sender + "## " + message);
+                //else
+                //    VRage.Utils.MyLog.Default.WriteLine("##" + sender + "## " + message);
             }
         }
     }

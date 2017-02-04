@@ -57,10 +57,10 @@ namespace midspace.SolarTracker
                 {
                     // The MotorStator which inherits from MotorBase.
                     IMyMotorBase motorBase = block.FatBlock as IMyMotorBase;
-                    if (motorBase == null || motorBase.Rotor == null)
+                    if (motorBase == null || motorBase.Top == null)
                         continue;
 
-                    IMyCubeGrid entityParent = motorBase.RotorGrid;
+                    IMyCubeGrid entityParent = motorBase.TopGrid;
                     if (entityParent == null)
                         continue;
                     if (!results.Any(e => e.EntityId == entityParent.EntityId))
@@ -76,10 +76,10 @@ namespace midspace.SolarTracker
                 {
                     // The Rotor Part.
                     IMyMotorRotor motorRotor = block.FatBlock as IMyMotorRotor;
-                    if (motorRotor == null || motorRotor.Stator == null)
+                    if (motorRotor == null || motorRotor.Base == null)
                         continue;
 
-                    IMyCubeGrid entityParent = motorRotor.Stator.CubeGrid;
+                    IMyCubeGrid entityParent = motorRotor.Base.CubeGrid;
                     if (!results.Any(e => e.EntityId == entityParent.EntityId))
                     {
                         results.Add(entityParent);

@@ -14,7 +14,7 @@ namespace midspace.SolarTracker
     using VRageMath;
     using IMySolarPanel = SpaceEngineers.Game.ModAPI.Ingame.IMySolarPanel;
 
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SolarPanel))]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SolarPanel), true)]
     public class SolarPanelLogic : MyGameLogicComponent
     {
         #region fields
@@ -26,7 +26,7 @@ namespace midspace.SolarTracker
         private IMySolarPanel _solarPanelEntity;
         //private string _info = "";
         //private IMyMotorStator motorBase1;
-        private IMyMotorStator motorBase2;
+        private IMyMotorStator _motorBase2;
 
         #endregion
 
@@ -115,13 +115,13 @@ namespace midspace.SolarTracker
                     var match = Regex.Match(terminalEntity.CustomName, @"(?<A>(.*\s{1,}|^)Az:)(?<B>[+-]?((\d+(\.\d*)?)|(\.\d+)))(?<C>(\s{1,}.*|$))", RegexOptions.IgnoreCase);
                     if (match.Success)
                     {
-                        terminalEntity.SetCustomName(string.Format("{0}{1:0.00}{2}", match.Groups["A"].Value, ang.Y, match.Groups["C"].Value));
+                        terminalEntity.CustomName = string.Format("{0}{1:0.00}{2}", match.Groups["A"].Value, ang.Y, match.Groups["C"].Value);
                     }
 
                     match = Regex.Match(terminalEntity.CustomName, @"(?<A>(.*\s{1,}|^)El:)(?<B>[+-]?((\d+(\.\d*)?)|(\.\d+)))(?<C>(\s{1,}.*|$))", RegexOptions.IgnoreCase);
                     if (match.Success)
                     {
-                        terminalEntity.SetCustomName(string.Format("{0}{1:0.00}{2}", match.Groups["A"].Value, ang.X, match.Groups["C"].Value));
+                        terminalEntity.CustomName = string.Format("{0}{1:0.00}{2}", match.Groups["A"].Value, ang.X, match.Groups["C"].Value);
                     }
 
                     _ignoreNameChange = false;
@@ -187,18 +187,18 @@ namespace midspace.SolarTracker
                 {
                     IMyMotorRotor motorRotor = blocks[0].FatBlock as IMyMotorRotor;
 
-                    if (motorRotor == null || motorRotor.Stator == null)
+                    if (motorRotor == null || motorRotor.Base == null)
                         return;
-                    motorBase2 = (IMyMotorStator)motorRotor;
+                    _motorBase2 = (IMyMotorStator)motorRotor;
                 }
                 else
                 {
-                    motorBase2 = (IMyMotorStator)blocks[0];
+                    _motorBase2 = (IMyMotorStator)blocks[0];
                 }
 
                 //MyAPIGateway.Utilities.ShowMessage("step", "4");
 
-                var definition = MyDefinitionManager.Static.GetCubeBlockDefinition(motorBase2.BlockDefinition);
+                var definition = MyDefinitionManager.Static.GetCubeBlockDefinition(_motorBase2.BlockDefinition);
                 var motorStatorDefinition = definition as MyMotorStatorDefinition;
 
                 if (motorStatorDefinition == null)
