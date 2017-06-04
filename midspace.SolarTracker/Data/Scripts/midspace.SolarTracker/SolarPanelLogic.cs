@@ -14,7 +14,7 @@ namespace midspace.SolarTracker
     using VRageMath;
     using IMySolarPanel = SpaceEngineers.Game.ModAPI.Ingame.IMySolarPanel;
 
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SolarPanel), true)]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SolarPanel), false)]
     public class SolarPanelLogic : MyGameLogicComponent
     {
         #region fields
@@ -33,8 +33,8 @@ namespace midspace.SolarTracker
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             _objectBuilder = objectBuilder;
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
+            this.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+            this.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
 
             if (!_isInitilized)
             {

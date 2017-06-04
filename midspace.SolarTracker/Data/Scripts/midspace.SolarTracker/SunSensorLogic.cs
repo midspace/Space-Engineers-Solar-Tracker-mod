@@ -15,7 +15,7 @@ namespace midspace.SolarTracker
     using VRage.ObjectBuilders;
     using VRageMath;
 
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SensorBlock), true)]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SensorBlock), false)]
     public class SunSensorLogic : MyGameLogicComponent
     {
         enum RotateDirections { Unknown, RollPositive, RollNegative, PitchPositive, PitchNegative, YawPositive, YawNegative };
@@ -39,9 +39,9 @@ namespace midspace.SolarTracker
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             _objectBuilder = objectBuilder;
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;
+            this.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+            this.NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
+            this.NeedsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;
         }
 
 
