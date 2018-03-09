@@ -15,7 +15,7 @@ namespace midspace.SolarTracker
     using VRage.ObjectBuilders;
     using VRageMath;
 
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SensorBlock), false)]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_SensorBlock), false, "SmallSunSensor", "LargeSunSensor")]
     public class SunSensorLogic : MyGameLogicComponent
     {
         enum RotateDirections { Unknown, RollPositive, RollNegative, PitchPositive, PitchNegative, YawPositive, YawNegative };
@@ -43,7 +43,6 @@ namespace midspace.SolarTracker
             this.NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
             this.NeedsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;
         }
-
 
         private void Initilize()
         {
@@ -287,33 +286,33 @@ namespace midspace.SolarTracker
             //var definition = MyDefinitionManager.Static.GetCubeBlockDefinition(sensorBlock.BlockDefinition);
             //var sensorDefinition = definition as MySensorBlockDefinition;
 
-            sensorBlock.SetValue("Left", 6f);
-            sensorBlock.SetValue("Right", 6f);
-            sensorBlock.SetValue("Top", 6f);
-            sensorBlock.SetValue("Bottom", 6f);
-            sensorBlock.SetValue("Front", 1f);
-            sensorBlock.SetValue("Back", 1f);
+            sensorBlock.LeftExtend = 6f;
+            sensorBlock.RightExtend = 6f;
+            sensorBlock.TopExtend = 6f;
+            sensorBlock.BottomExtend = 6f;
+            sensorBlock.FrontExtend = 1f;
+            sensorBlock.BackExtend = 1f;
 
             if (sensorBlock.DetectPlayers)
-                sensorBlock.ApplyAction("Detect Players");
+                sensorBlock.DetectPlayers = false;
             if (sensorBlock.DetectFloatingObjects)
-                sensorBlock.ApplyAction("Detect Floating Objects");
+                sensorBlock.DetectFloatingObjects = false;
             if (sensorBlock.DetectSmallShips)
-                sensorBlock.ApplyAction("Detect Small Ships");
+                sensorBlock.DetectSmallShips = false;
             if (sensorBlock.DetectLargeShips)
-                sensorBlock.ApplyAction("Detect Large Ships");
+                sensorBlock.DetectLargeShips = false;
             if (sensorBlock.DetectStations)
-                sensorBlock.ApplyAction("Detect Stations");
+                sensorBlock.DetectStations = false;
             if (sensorBlock.DetectAsteroids)
-                sensorBlock.ApplyAction("Detect Asteroids");
+                sensorBlock.DetectAsteroids = false;
             if (sensorBlock.DetectOwner)
-                sensorBlock.ApplyAction("Detect Owner");
+                sensorBlock.DetectOwner = false;
             if (sensorBlock.DetectFriendly)
-                sensorBlock.ApplyAction("Detect Friendly");
+                sensorBlock.DetectFriendly = false;
             if (sensorBlock.DetectNeutral)
-                sensorBlock.ApplyAction("Detect Neutral");
+                sensorBlock.DetectNeutral = false;
             if (sensorBlock.DetectEnemy)
-                sensorBlock.ApplyAction("Detect Enemy");
+                sensorBlock.DetectEnemy = false;
         }
 
         private void ResetRotor(Sandbox.ModAPI.IMyMotorStator motorBase)

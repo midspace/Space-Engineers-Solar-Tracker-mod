@@ -120,18 +120,6 @@ namespace midspace.SolarTracker
         }
 
         /// <summary>
-        /// Replicates the Sandbox.ModAPI.Ingame.TerminalBlockExtentions.ApplyAction(), but without the messy namespacing.
-        /// </summary>
-        /// <param name="terminalBlock"></param>
-        /// <param name="actionName"></param>
-        public static void ApplyAction(this Sandbox.ModAPI.Ingame.IMyTerminalBlock terminalBlock, string actionName)
-        {
-            var action = terminalBlock.GetActionWithName(actionName);
-            if (action != null)
-                action.Apply(terminalBlock);
-        }
-
-        /// <summary>
         /// Time elapsed since the start of the game.
         /// This is saved in checkpoint, instead of GameDateTime.
         /// </summary>
